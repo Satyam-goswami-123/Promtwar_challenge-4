@@ -1,19 +1,106 @@
 // ============================================================
-// NexusAI Stadium — Gemini API Service Layer
+// NexusAI Stadium — Gemini API Service Layer (Security, Caching, & Validation)
 // ============================================================
 
 import { GoogleGenAI } from '@google/genai';
 import { STADIUM_VENUES, MOCK_INCIDENTS } from '../mockData';
 
-// Validate environment variable
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-  console.warn("WARNING: VITE_GEMINI_API_KEY is not configured. Running in Mock/Simulation fallback mode.");
+// ---- 1. API Key Format Validation ----
+export function isValidApiKey(key: string | undefined): boolean {
+  if (!key) return false;
+  // Standard Google Gemini API Key format check (39 characters, starts with AIzaSy)
+  const pattern = /^AIzaSy[A-Za-z0-9_-]{33}$/;
+  return pattern.test(key);
 }
 
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 let aiClient: GoogleGenAI | null = null;
-if (apiKey && apiKey !== 'your_gemini_api_key_here') {
+
+// Validate key format before initializing
+if (isValidApiKey(apiKey)) {
   aiClient = new GoogleGenAI({ apiKey });
+} else {
+  console.warn("WARNING: VITE_GEMINI_API_KEY is missing or invalid. Running in Mock/Simulation fallback mode.");
+}
+
+// ---- 2. Client-Side Rate Limiting (5 requests per 10 seconds) ----
+const requestTimestamps: number[] = [];
+const RATE_LIMIT_WINDOW_MS = 10000;
+const MAX_REQUESTS_PER_WINDOW = 5;
+
+export function checkRateLimit(): boolean {
+  const now = Date.now();
+  while (requestTimestamps.length > 0 && requestTimestamps[0] < now - RATE_LIMIT_WINDOW_MS) {
+    requestTimestamps.shift();
+  }
+  if (requestTimestamps.length >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  requestTimestamps.push(now);
+  return true;
+}
+
+export function resetRateLimiter(): void {
+  requestTimestamps.length = 0;
+}
+
+// ---- 3. Input Validation and XSS Sanitization ----
+export function sanitizeAndValidateInput(text: string): string {
+  if (text.length > 1000) {
+    throw new Error("Input exceeds the maximum allowed length of 1000 characters.");
+  }
+  // Strip HTML tags to mitigate XSS
+  const sanitized = text.replace(/<[^>]*>/g, '');
+  if (!sanitized.trim()) {
+    throw new Error("Input message cannot be empty.");
+  }
+  return sanitized;
+}
+
+// ---- 4. Gemini Response Caching (Session Storage with memory fallback) ----
+const localCache: Record<string, string> = {};
+
+export function getCachedResponse(message: string): string | null {
+  const key = `nexus_cache_${message.toLowerCase().trim()}`;
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      return sessionStorage.getItem(key);
+    }
+  } catch (e) {
+    // SessionStorage unavailable or restricted
+  }
+  return localCache[key] || null;
+}
+
+export function setCachedResponse(message: string, response: string): void {
+  const key = `nexus_cache_${message.toLowerCase().trim()}`;
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(key, response);
+    }
+  } catch (e) {
+    // SessionStorage unavailable or restricted
+  }
+  localCache[key] = response;
+}
+
+// ---- 5. Request Timeout Wrapper (10 seconds limit) ----
+export function withTimeout<T>(promise: Promise<T>, timeoutMs = 10000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("Request timed out after 10 seconds."));
+    }, timeoutMs);
+
+    promise
+      .then(res => {
+        clearTimeout(timer);
+        resolve(res);
+      })
+      .catch(err => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
 }
 
 // ---- Gemini Tools Definition (Function Calling) ----
@@ -35,7 +122,6 @@ const getRestroomQueue = {
   }
 };
 
-// Function execution mappings
 const executeFunction = async (name: string, args: any): Promise<any> => {
   switch (name) {
     case 'getLiveMatchScore':
@@ -84,12 +170,36 @@ export async function streamChatResponse(
   imageBase64: string | null = null,
   onChunk: (text: string) => void
 ): Promise<string> {
+  // A. Input validation & Sanitization
+  const cleanMessage = sanitizeAndValidateInput(message);
+
+  // B. Rate limit check
+  if (!checkRateLimit()) {
+    const limitError = "Rate limit exceeded. Please wait a moment before sending another query.";
+    onChunk(limitError);
+    return limitError;
+  }
+
+  // C. Query caching check (skip cache if there is an image attachment)
+  if (!imageBase64) {
+    const cached = getCachedResponse(cleanMessage);
+    if (cached) {
+      // Simulate streaming from cache
+      const words = cached.split(' ');
+      for (let i = 0; i < words.length; i++) {
+        await new Promise(r => setTimeout(r, 10));
+        onChunk(words[i] + (i === words.length - 1 ? '' : ' '));
+      }
+      return cached;
+    }
+  }
+
+  // D. Call real Gemini client with timeout if initialized
   if (aiClient) {
     try {
       const systemInstruction = getStadiumContext();
       const contents: any[] = [];
 
-      // 1. Process History
       history.forEach(msg => {
         contents.push({
           role: msg.role === 'assistant' ? 'model' : 'user',
@@ -97,7 +207,6 @@ export async function streamChatResponse(
         });
       });
 
-      // 2. Prepare current message parts (Text + Image if multimodal)
       const currentParts: any[] = [];
       if (imageBase64) {
         const base64Data = imageBase64.split(',')[1] || imageBase64;
@@ -108,55 +217,57 @@ export async function streamChatResponse(
           }
         });
       }
-      currentParts.push({ text: message });
+      currentParts.push({ text: cleanMessage });
 
       contents.push({
         role: 'user',
         parts: currentParts
       });
 
-      // 3. Request Stream from Gemini with Function Declarations
-      const responseStream = await aiClient.models.generateContentStream({
-        model: 'gemini-1.5-flash',
-        contents,
-        config: {
-          systemInstruction,
-          temperature: 0.7,
-          tools: [{ functionDeclarations: [getLiveMatchScore, getRestroomQueue] }]
-        }
-      });
+      // Invoke streaming call with a 10s connection timeout wrapper
+      const responseStream = await withTimeout(
+        aiClient.models.generateContentStream({
+          model: 'gemini-2.5-flash',
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.7,
+            tools: [{ functionDeclarations: [getLiveMatchScore, getRestroomQueue] }]
+          }
+        }),
+        10000
+      );
 
       let fullResponseText = '';
       let functionCalls: any[] = [];
 
       for await (const chunk of responseStream) {
-        // Collect text chunk
         if (chunk.text) {
           fullResponseText += chunk.text;
           onChunk(chunk.text);
         }
-        // Collect function call metadata if Gemini requests it
         if (chunk.functionCalls) {
           functionCalls.push(...chunk.functionCalls);
         }
       }
 
-      // 4. Handle Function Calling if requested
       if (functionCalls.length > 0) {
-        const functionCall = functionCalls[0]; // execute first call
+        const functionCall = functionCalls[0];
         try {
           const result = await executeFunction(functionCall.name, functionCall.args);
           
-          // Send tool output back to Gemini to get the final streaming response
-          const finalStream = await aiClient.models.generateContentStream({
-            model: 'gemini-1.5-flash',
-            contents: [
-              ...contents,
-              { role: 'model', parts: [{ functionCall }] },
-              { role: 'tool', parts: [{ functionResponse: { name: functionCall.name, response: result } }] }
-            ],
-            config: { systemInstruction }
-          });
+          const finalStream = await withTimeout(
+            aiClient.models.generateContentStream({
+              model: 'gemini-2.5-flash',
+              contents: [
+                ...contents,
+                { role: 'model', parts: [{ functionCall }] },
+                { role: 'tool', parts: [{ functionResponse: { name: functionCall.name, response: result } }] }
+              ],
+              config: { systemInstruction }
+            }),
+            10000
+          );
 
           fullResponseText = '';
           for await (const chunk of finalStream) {
@@ -170,14 +281,18 @@ export async function streamChatResponse(
         }
       }
 
+      // Cache the response
+      if (!imageBase64) {
+        setCachedResponse(cleanMessage, fullResponseText);
+      }
       return fullResponseText;
     } catch (error) {
-      console.error("Gemini stream call failed, using mock fallback:", error);
+      console.error("Gemini call failed or timed out, falling back to simulator:", error);
     }
   }
 
   // ---- Mock Fallback Simulator ----
-  const lower = message.toLowerCase();
+  const lower = cleanMessage.toLowerCase();
   let selectedResponse = "I understand you need help. Let me verify that stadium info for you...";
   
   const responses = {
@@ -205,12 +320,14 @@ export async function streamChatResponse(
 
   // Simulate streaming output locally
   const words = selectedResponse.split(' ');
-  let currentText = '';
   for (let i = 0; i < words.length; i++) {
     await new Promise(r => setTimeout(r, 40));
-    currentText += (i === 0 ? '' : ' ') + words[i];
     onChunk(words[i] + (i === words.length - 1 ? '' : ' '));
   }
 
+  // Cache mock response
+  if (!imageBase64) {
+    setCachedResponse(cleanMessage, selectedResponse);
+  }
   return selectedResponse;
 }

@@ -35,11 +35,26 @@ const COMMS = [
 
 export default function VolunteerApp({ onBack }: Props) {
   const [activeTab, setActiveTab] = useState<VolTab>('tasks');
-  const [tasks, setTasks] = useState<VolunteerTask[]>(MOCK_VOLUNTEER_TASKS);
+  const [tasks, setTasks] = useState<VolunteerTask[]>(() => {
+    try {
+      const stored = localStorage.getItem('nexus_volunteer_tasks');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return MOCK_VOLUNTEER_TASKS;
+  });
   const [listening, setListening] = useState(false);
   const [voiceText, setVoiceText] = useState('');
   const [myZone] = useState('Section 112 / Gate A');
   const [checkedIn] = useState(true);
+
+  // Persist tasks to localStorage
+  useEffect(() => {
+    localStorage.setItem('nexus_volunteer_tasks', JSON.stringify(tasks));
+  }, [tasks]);
 
   // Simulate AI priority score updates
   useEffect(() => {

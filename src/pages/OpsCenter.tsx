@@ -17,12 +17,45 @@ const venue = STADIUM_VENUES[0];
 export default function OpsCenter({ onBack }: Props) {
   const [activeTab, setActiveTab] = useState<OpsTab>('overview');
   const [userView, setUserView] = useState<UserView>('ops');
-  const [incidents, setIncidents] = useState<Incident[]>(MOCK_INCIDENTS);
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(MOCK_INCIDENTS[0]);
+  const [incidents, setIncidents] = useState<Incident[]>(() => {
+    try {
+      const stored = localStorage.getItem('nexus_ops_incidents');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.map((inc: any) => ({
+          ...inc,
+          reportedAt: new Date(inc.reportedAt)
+        }));
+      }
+    } catch (e) {
+      // ignore
+    }
+    return MOCK_INCIDENTS;
+  });
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(() => {
+    try {
+      const stored = localStorage.getItem('nexus_ops_incidents');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.length > 0) {
+          return {
+            ...parsed[0],
+            reportedAt: new Date(parsed[0].reportedAt)
+          };
+        }
+      }
+    } catch (e) {}
+    return MOCK_INCIDENTS[0];
+  });
   const [insights] = useState<AIInsight[]>(MOCK_AI_INSIGHTS);
   const [tick, setTick] = useState(0);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [situationReport, setSituationReport] = useState('');
+
+  // Persist incidents to localStorage
+  useEffect(() => {
+    localStorage.setItem('nexus_ops_incidents', JSON.stringify(incidents));
+  }, [incidents]);
 
   // Live clock tick for reactive updates
   useEffect(() => {
