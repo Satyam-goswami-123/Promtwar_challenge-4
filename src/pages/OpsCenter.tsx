@@ -20,15 +20,8 @@ export default function OpsCenter({ onBack }: Props) {
   const [incidents, setIncidents] = useState<Incident[]>(MOCK_INCIDENTS);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(MOCK_INCIDENTS[0]);
   const [insights] = useState<AIInsight[]>(MOCK_AI_INSIGHTS);
-  const [tick, setTick] = useState(0);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [situationReport, setSituationReport] = useState('');
-
-  // Live clock tick for reactive updates
-  useEffect(() => {
-    const interval = setInterval(() => setTick(t => t + 1), 10000);
-    return () => clearInterval(interval);
-  }, []);
 
   const generateSituationReport = useCallback(() => {
     setGeneratingReport(true);

@@ -20,16 +20,19 @@ if (apiKey && apiKey !== 'your_gemini_api_key_here') {
 const getLiveMatchScore = {
   name: 'getLiveMatchScore',
   description: 'Returns the current live score, minute, and statistics of the match playing in the stadium.',
-  parameters: { type: 'OBJECT', properties: {} }
+  parameters: {
+    type: 'OBJECT' as const,
+    properties: {} as Record<string, any>,
+  }
 };
 
 const getRestroomQueue = {
   name: 'getRestroomQueue',
   description: 'Checks the queue wait time and occupancy of the nearest restroom.',
   parameters: {
-    type: 'OBJECT',
+    type: 'OBJECT' as const,
     properties: {
-      location: { type: 'STRING', description: 'Current location of the user (e.g. Section 112)' }
+      location: { type: 'STRING' as const, description: 'Current location of the user (e.g. Section 112)' }
     },
     required: ['location']
   }
@@ -122,7 +125,7 @@ export async function streamChatResponse(
         config: {
           systemInstruction,
           temperature: 0.7,
-          tools: [{ functionDeclarations: [getLiveMatchScore, getRestroomQueue] }]
+          tools: [{ functionDeclarations: [getLiveMatchScore as any, getRestroomQueue as any] }]
         }
       });
 
