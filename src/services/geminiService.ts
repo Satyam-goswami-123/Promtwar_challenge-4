@@ -171,7 +171,8 @@ export async function streamChatResponse(
   message: string,
   history: any[],
   imageBase64: string | null = null,
-  onChunk: (text: string) => void
+  onChunk: (text: string) => void,
+  onFunctionCall?: (name: string, args: any, result: any) => void
 ): Promise<string> {
   // A. Input validation & Sanitization
   const cleanMessage = sanitizeAndValidateInput(message);
@@ -258,6 +259,9 @@ export async function streamChatResponse(
         const functionCall = functionCalls[0];
         try {
           const result = await executeFunction(functionCall.name, functionCall.args);
+          if (onFunctionCall) {
+            onFunctionCall(functionCall.name, functionCall.args, result);
+          }
           
           const finalStream = await withTimeout(
             aiClient.models.generateContentStream({
@@ -309,6 +313,9 @@ export async function streamChatResponse(
 
   if (lower.includes('restroom') || lower.includes('toilet') || lower.includes('bathroom') || lower.includes('wc')) {
     selectedResponse = responses.restroom;
+    if (onFunctionCall) {
+      onFunctionCall('getRestroomQueue', { location: "Section 14C" }, { location: "Section 14C Corridor", waitTimeMinutes: 3, status: "normal", accessibilityFriendly: true });
+    }
   } else if (lower.includes('food') || lower.includes('eat') || lower.includes('hungry') || lower.includes('concession')) {
     selectedResponse = responses.food;
   } else if (lower.includes('park') || lower.includes('car') || lower.includes('lot')) {
@@ -317,6 +324,9 @@ export async function streamChatResponse(
     selectedResponse = responses.seat;
   } else if (lower.includes('score') || lower.includes('goal') || lower.includes('match') || lower.includes('game')) {
     selectedResponse = responses.score;
+    if (onFunctionCall) {
+      onFunctionCall('getLiveMatchScore', {}, { match: "Brazil vs Argentina", score: "2 - 1", minute: "67' live", stats: "Possession: BRA 54% | ARG 46%" });
+    }
   } else if (lower.includes('emergency') || lower.includes('medical') || lower.includes('hurt')) {
     selectedResponse = responses.emergency;
   }

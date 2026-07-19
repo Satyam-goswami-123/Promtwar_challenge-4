@@ -29,7 +29,7 @@ export function useChat(initialMessages: ChatMessage[] = []) {
       timestamp: new Date(),
       metadata: {
         agent: 'FanAssistantAgent',
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         ragSources: ['stadium-kb', 'real-time-data']
       }
     };
@@ -37,14 +37,28 @@ export function useChat(initialMessages: ChatMessage[] = []) {
     setMessages(prev => [...prev, aiMsg]);
 
     try {
-      await streamChatResponse(text, messages, imagePreview, (chunk) => {
-        setMessages(prev => prev.map(msg => {
-          if (msg.id === aiMsgId) {
-            return { ...msg, content: msg.content + chunk };
-          }
-          return msg;
-        }));
-      });
+      await streamChatResponse(
+        text,
+        messages,
+        imagePreview,
+        (chunk) => {
+          setMessages(prev => prev.map(msg => {
+            if (msg.id === aiMsgId) {
+              return { ...msg, content: msg.content + chunk };
+            }
+            return msg;
+          }));
+        },
+        (name, args, result) => {
+          setMessages(prev => prev.map(msg => {
+            if (msg.id === aiMsgId) {
+              const toolNote = `*(⚙️ System: Executing tool \`${name}\` with arguments ${JSON.stringify(args)}... Result: ${JSON.stringify(result)})*\n\n`;
+              return { ...msg, content: toolNote + msg.content };
+            }
+            return msg;
+          }));
+        }
+      );
     } catch {
       setMessages(prev => prev.map(msg => {
         if (msg.id === aiMsgId) {
