@@ -107,16 +107,19 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMs = 10000): Promise<
 const getLiveMatchScore = {
   name: 'getLiveMatchScore',
   description: 'Returns the current live score, minute, and statistics of the match playing in the stadium.',
-  parameters: { type: 'OBJECT', properties: {} }
+  parametersJsonSchema: {
+    type: 'object',
+    properties: {}
+  }
 };
 
 const getRestroomQueue = {
   name: 'getRestroomQueue',
   description: 'Checks the queue wait time and occupancy of the nearest restroom.',
-  parameters: {
-    type: 'OBJECT',
+  parametersJsonSchema: {
+    type: 'object',
     properties: {
-      location: { type: 'STRING', description: 'Current location of the user (e.g. Section 112)' }
+      location: { type: 'string', description: 'Current location of the user (e.g. Section 112)' }
     },
     required: ['location']
   }

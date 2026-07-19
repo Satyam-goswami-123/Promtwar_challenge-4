@@ -48,7 +48,7 @@ export default function OpsCenter({ onBack }: Props) {
     return MOCK_INCIDENTS[0];
   });
   const [insights] = useState<AIInsight[]>(MOCK_AI_INSIGHTS);
-  const [tick, setTick] = useState(0);
+  const [_tick, setTick] = useState(0);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [situationReport, setSituationReport] = useState('');
 

@@ -9,10 +9,8 @@ const VolunteerApp = lazy(() => import('./pages/VolunteerApp'));
 
 function App() {
   const [view, setView] = useState<AppView['current']>('landing');
-  const [userRole, setUserRole] = useState<UserRole>('fan');
 
-  const handleNavigate = (target: AppView['current'], role?: UserRole) => {
-    if (role) setUserRole(role);
+  const handleNavigate = (target: AppView['current'], _role?: UserRole) => {
     setView(target);
   };
 
