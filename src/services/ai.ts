@@ -1,8 +1,11 @@
 // ============================================================
-// NexusAI Stadium — AI Service Layer
+// NexusAI Stadium — AI Service Layer (Real Gemini + Simulator Fallback)
 // ============================================================
 
-// ---- AI Response Engine (Simulates Gemini) ----
+import { GoogleGenAI } from '@google/genai';
+import { STADIUM_VENUES, MOCK_INCIDENTS } from '../mockData';
+
+// ---- AI Response Engine (Simulates Gemini fallback) ----
 export const AI_RESPONSES: Record<string, string[]> = {
   restroom: [
     "The nearest accessible restroom is **30 meters from your current location** at Gate A, Level 1 — Section 111 Corridor. Current wait time: **~3 minutes** ✅\n\nThere's also a quieter option at Gate C, Level 1 (4-minute walk, no queue currently).",
@@ -23,7 +26,7 @@ export const AI_RESPONSES: Record<string, string[]> = {
     "⚽ **Brazil 2 — 1 Argentina** | Quarter-Final\n⏱️ 67th minute — LIVE\n\n📊 **Match Stats:**\n- Possession: BRA 54% | ARG 46%\n- Shots on target: BRA 8 | ARG 6\n- Corners: BRA 7 | ARG 4\n\n🔥 Last goal: Vinicius Jr. (61') — curling long-range stunner!\nExpected goals: BRA 2.1 | ARG 1.4",
   ],
   help: [
-    "Hi! I'm **NEXUS**, your FIFA World Cup 2026 AI assistant. I'm here to help you with:\n\n🏟️ **Stadium Navigation** — directions, accessible routes, maps\n🍔 **Food & Concessions** — menus, wait times, pre-ordering\n🚌 **Transport** — metro, shuttles, parking, rideshare\n⚽ **Match Info** — live scores, stats, highlights\n♿ **Accessibility** — wheelchair routes, assistance requests\n🆘 **Emergency Help** — medical, security, lost items\n\nWhat do you need? I speak your language (50+ supported) 🌍",
+    "Hi! I'm **NEXUS**, your FIFA World Cup 2026 AI assistant. I'm here to help you with:\n\n🏟️ **Stadium Navigation** — directions, accessible routes, maps\n🍔 **Food & Concessions** — menus, wait times, pre-ordering\n🚌 **Transport** — metro, shuttles, parking, rideshare\n♿ **Accessibility** — wheelchair routes, assistance requests\n🆘 **Emergency Help** — medical, security, lost items\n\nWhat do you need? I speak your language (50+ supported) 🌍",
   ],
   lost: [
     "I'll help you immediately. For a **lost item**:\n\n📞 Report to the Lost & Found booth at Gate B Information Center (open 24hrs during match days)\n\nFor a **lost person** (child or separated companion):\n1. Stay where you are\n2. I'm flagging this to our **Volunteer Team** now\n3. You'll receive a callback within 2 minutes\n\n🆘 For urgent emergencies: Press the red Emergency button or call **+1-800-FIFA-HELP**",
@@ -36,7 +39,51 @@ export const AI_RESPONSES: Record<string, string[]> = {
   ],
 };
 
-export function getAIResponse(message: string): Promise<string> {
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+let aiClient: GoogleGenAI | null = null;
+
+if (apiKey && apiKey !== 'your_gemini_api_key_here') {
+  aiClient = new GoogleGenAI({ apiKey });
+}
+
+export async function getAIResponse(message: string): Promise<string> {
+  // If API key is present, use real Gemini models
+  if (aiClient) {
+    try {
+      const systemInstruction = `
+        You are NEXUS, the official multilingual AI assistant for the FIFA World Cup 2026.
+        You are deployed at AT&T Stadium.
+        
+        Current Stadium Details:
+        ${JSON.stringify(STADIUM_VENUES[0], null, 2)}
+        
+        Active Operational Incidents (use this to warn or update if relevant):
+        ${JSON.stringify(MOCK_INCIDENTS, null, 2)}
+        
+        Guidelines:
+        1. Base your stadium navigation, concessions, and event directions on the data above.
+        2. Keep answers concise, helpful, and friendly.
+        3. Format your answers clearly using Markdown (lists, bold text, etc.).
+        4. If a user states a critical issue, instruct them to click the red EMERGENCY button immediately.
+      `;
+
+      const response = await aiClient.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: message,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+        }
+      });
+
+      return response.text || "I apologize, I generated an empty response. Please ask again.";
+    } catch (error) {
+      console.error("Real Gemini API call failed, falling back to simulator:", error);
+      // Fall through to simulator
+    }
+  }
+
+  // Simulator Fallback (used when API Key is missing/invalid or during unit testing)
   const lower = message.toLowerCase();
   let responses = AI_RESPONSES.default;
 
