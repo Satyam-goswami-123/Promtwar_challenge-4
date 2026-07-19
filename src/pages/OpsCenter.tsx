@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { Incident, AIInsight } from '../types';
 import { MOCK_INCIDENTS, MOCK_AI_INSIGHTS, STADIUM_VENUES } from '../mockData';
 import { TypeIcon, SeverityBadge } from '../components/OpsCenter/Shared';
