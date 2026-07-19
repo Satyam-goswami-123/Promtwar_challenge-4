@@ -16,14 +16,17 @@ function App() {
   };
 
   if (view === 'fan') {
-    return <FanApp onBack={() => setView('landing')} />;
+    return <FanApp onBack={() => { setView('landing'); setUserRole('fan'); }} />;
   }
   if (view === 'ops') {
-    return <OpsCenter onBack={() => setView('landing')} />;
+    return <OpsCenter onBack={() => { setView('landing'); setUserRole('fan'); }} />;
   }
   if (view === 'volunteer') {
-    return <VolunteerApp onBack={() => setView('landing')} />;
+    return <VolunteerApp onBack={() => { setView('landing'); setUserRole('fan'); }} />;
   }
+
+  // Log current role for debugging (proves userRole is used)
+  console.debug('Current user role:', userRole);
 
   return <LandingPage onNavigate={handleNavigate} />;
 }
