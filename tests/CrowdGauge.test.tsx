@@ -1,7 +1,7 @@
 import { test, expect, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { CrowdGauge } from './CrowdGauge';
+import { CrowdGauge } from '../src/components/OpsCenter/CrowdGauge';
 
 afterEach(() => {
   cleanup();
@@ -23,7 +23,7 @@ test('renders CrowdGauge with given density and status', () => {
 test('renders critical status badge correctly', () => {
   render(<CrowdGauge density={95} name="Gate B" status="critical" />);
   expect(screen.getByText('CRITICAL')).toBeInTheDocument();
-  // check for the badge-red class
+  
   const badge = screen.getByText('CRITICAL');
   expect(badge).toHaveClass('badge-red');
 });

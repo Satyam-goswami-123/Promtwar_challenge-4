@@ -78,10 +78,23 @@ export default function FanApp({ onBack }: Props) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  const handleSend = () => {
+    if (!inputText.trim() && !imagePreview) return;
+    sendMessage(inputText, imagePreview);
+    setInputText('');
+    setImagePreview(null);
+  };
+
+  const handleSuggestionClick = (text: string) => {
+    sendMessage(text, null);
+    setInputText('');
+    setImagePreview(null);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(inputText);
+      handleSend();
     }
   };
 
@@ -258,7 +271,7 @@ export default function FanApp({ onBack }: Props) {
                   <button
                     key={sugg.text}
                     className="quick-sugg-btn"
-                    onClick={() => sendMessage(sugg.text)}
+                    onClick={() => handleSuggestionClick(sugg.text)}
                     role="listitem"
                     aria-label={`Ask: ${sugg.text}`}
                   >
@@ -313,7 +326,7 @@ export default function FanApp({ onBack }: Props) {
               />
               <button
                 className="btn btn-primary send-btn"
-                onClick={() => sendMessage(inputText)}
+                onClick={handleSend}
                 disabled={!inputText.trim() && !imagePreview}
                 aria-label="Send message"
                 id="send-message-btn"

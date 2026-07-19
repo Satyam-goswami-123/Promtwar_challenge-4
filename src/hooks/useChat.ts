@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { ChatMessage } from '../types';
-import { getAIResponse } from '../services/ai';
+import { streamChatResponse } from '../services/geminiService';
 
 export function useChat(initialMessages: ChatMessage[] = []) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -17,36 +17,48 @@ export function useChat(initialMessages: ChatMessage[] = []) {
       attachments: imagePreview ? [{ type: 'image', url: imagePreview, name: 'upload.jpg' }] : undefined,
     };
     
-    setMessages(prev => [...prev, userMsg]);
+    const updatedHistory = [...messages, userMsg];
+    setMessages(updatedHistory);
     setIsTyping(true);
 
+    const aiMsgId = `a-${Date.now()}`;
+    const aiMsg: ChatMessage = {
+      id: aiMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      metadata: {
+        agent: 'FanAssistantAgent',
+        model: 'gemini-1.5-flash',
+        ragSources: ['stadium-kb', 'real-time-data']
+      }
+    };
+
+    setMessages(prev => [...prev, aiMsg]);
+
     try {
-      const response = await getAIResponse(text);
-      const aiMsg: ChatMessage = {
-        id: `a-${Date.now()}`, 
-        role: 'assistant', 
-        content: response, 
-        timestamp: new Date(),
-        metadata: {
-          agent: 'FanAssistantAgent',
-          model: 'gemini-1.5-pro',
-          tokens: Math.floor(Math.random() * 200) + 80,
-          ragSources: ['stadium-kb', 'real-time-data']
-        }
-      };
-      setMessages(prev => [...prev, aiMsg]);
+      await streamChatResponse(text, messages, imagePreview, (chunk) => {
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === aiMsgId) {
+            return { ...msg, content: msg.content + chunk };
+          }
+          return msg;
+        }));
+      });
     } catch {
-      setMessages(prev => [...prev, {
-        id: `err-${Date.now()}`,
-        role: 'assistant',
-        content: 'I apologize — I\'m experiencing a brief connection issue. Please try again in a moment.',
-        timestamp: new Date(),
-        metadata: { agent: 'FanAssistantAgent', model: 'gemini-1.5-pro' }
-      }]);
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === aiMsgId) {
+          return {
+            ...msg,
+            content: "I apologize — I'm experiencing a connection issue. Please try again in a moment."
+          };
+        }
+        return msg;
+      }));
     } finally {
       setIsTyping(false);
     }
-  }, []);
+  }, [messages]);
 
   return { messages, setMessages, isTyping, sendMessage };
 }
