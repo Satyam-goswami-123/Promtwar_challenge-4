@@ -56,7 +56,6 @@ export default function FanApp({ onBack }: Props) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const liveMinute = useLiveTimer(30000, 90, 67);
-  const [score, setScore] = useState({ home: 2, away: 1 });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,7 +66,7 @@ export default function FanApp({ onBack }: Props) {
     setMessages([{
       id: 'init',
       role: 'assistant',
-      content: `${greeting.greeting}\n\n${greeting.prompt}\n\nI'm **NEXUS**, your personal FIFA World Cup 2026 AI guide. I can help you navigate AT&T Stadium, check live scores, find food and restrooms, arrange transport, and much more. Ask me anything — I understand ${greeting.lang} and 49 other languages! 🌍`,
+      content: `${greeting.greeting}\n\n${greeting.prompt}\n\nI'm **NEXUS**, your personal FIFA World Cup 2026 AI guide. I can help you navigate AT&T Stadium, check live scores, find food and rest[...]`,
       timestamp: new Date(),
       metadata: { agent: 'FanAssistantAgent', model: 'gemini-1.5-pro', ragSources: ['stadium-kb', 'faq-db'] }
     }]);
@@ -481,7 +480,7 @@ export default function FanApp({ onBack }: Props) {
             </div>
 
             {/* Scoreboard */}
-            <div className="scoreboard glass-card" aria-label={`Live score: Brazil ${score.home} Argentina ${score.away}, ${liveMinute} minutes played`}>
+            <div className="scoreboard glass-card" aria-label={`Live score: Brazil 2 Argentina 1, ${liveMinute} minutes played`}>
               <div className="stage-tag">⚽ Quarter-Final · FIFA World Cup 2026</div>
               <div className="score-row">
                 <div className="team-block">
@@ -490,7 +489,7 @@ export default function FanApp({ onBack }: Props) {
                   <div className="team-code">BRA</div>
                 </div>
                 <div className="score-center">
-                  <div className="score-display">{score.home} – {score.away}</div>
+                  <div className="score-display">2 – 1</div>
                   <div className="match-clock">
                     <span className="status-dot live" aria-hidden="true"></span>
                     <span>{liveMinute}'</span>

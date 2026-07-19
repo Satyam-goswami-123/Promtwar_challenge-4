@@ -4,7 +4,7 @@
 
 import type {
   StadiumVenue, Incident, VolunteerTask, AIInsight,
-  TransportInfo, ChatMessage, MatchInfo
+  TransportInfo
 } from './types';
 
 // ---- Stadium Venues ----
@@ -17,12 +17,12 @@ export const STADIUM_VENUES: StadiumVenue[] = [
     capacity: 80000,
     currentAttendance: 74320,
     zones: [
-      { id: 'gate-a', name: 'Gate A Plaza', capacity: 8000, currentOccupancy: 6800, density: 85, flowRate: 340, status: 'crowded', alerts: ['High density — recommend diverting to Gate C'], prediction15min: 72 },
+      { id: 'gate-a', name: 'Gate A Plaza', capacity: 8000, currentOccupancy: 6800, density: 85, flowRate: 340, status: 'crowded', alerts: ['High density — recommend diverting to Gate C'], prediction15min: 90 },
       { id: 'gate-b', name: 'Gate B Entry', capacity: 8000, currentOccupancy: 4200, density: 52, flowRate: 210, status: 'moderate', alerts: [], prediction15min: 58 },
       { id: 'gate-c', name: 'Gate C South', capacity: 8000, currentOccupancy: 3100, density: 39, flowRate: 155, status: 'clear', alerts: [], prediction15min: 44 },
-      { id: 'concourse-1', name: 'Lower Concourse', capacity: 12000, currentOccupancy: 9800, density: 82, flowRate: 490, status: 'crowded', alerts: ['Food court backup — 18 min wait'], prediction15min: 68 },
-      { id: 'section-112', name: 'Section 112', capacity: 1500, currentOccupancy: 1480, density: 99, flowRate: 0, status: 'critical', alerts: ['⚠️ CRITICAL — near capacity, flow blocked'], prediction15min: 99 },
-      { id: 'parking-north', name: 'North Parking', capacity: 15000, currentOccupancy: 12100, density: 81, flowRate: 180, status: 'crowded', alerts: ['Lot P3 at 95% — directing to P7'], prediction15min: 75 },
+      { id: 'concourse-1', name: 'Lower Concourse', capacity: 12000, currentOccupancy: 9800, density: 82, flowRate: 490, status: 'crowded', alerts: ['Food court backup — 18 min wait'], prediction15min: 88 },
+      { id: 'section-112', name: 'Section 112', capacity: 1500, currentOccupancy: 1480, density: 99, flowRate: 0, status: 'critical', alerts: ['⚠️ CRITICAL — near capacity, flow blocked'], prediction15min: 95 },
+      { id: 'parking-north', name: 'North Parking', capacity: 15000, currentOccupancy: 12100, density: 81, flowRate: 180, status: 'crowded', alerts: ['Lot P3 at 95% — directing to P7'], prediction15min: 85 },
     ],
     weather: { temp: 29, feels_like: 34, condition: 'Partly Cloudy', humidity: 65, wind_speed: 14, icon: '⛅', uv_index: 7 },
     match: {
@@ -72,12 +72,12 @@ export const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'Volunteer_Team_3',
     reportedAt: new Date(Date.now() - 4 * 60000),
     updatedAt: new Date(Date.now() - 90000),
-    aiPlan: `**AI-Generated Incident Action Plan (ICS-202)**\n\n**Incident:** Heat Exhaustion — Section 112\n**Severity:** HIGH | **Time:** T+4min\n\n**Immediate Actions:**\n1. ✅ EMS Team Alpha dispatched (ETA: 2 min via Access Tunnel B)\n2. ✅ Section 112 crowd buffer created — 3 volunteers holding perimeter\n3. 🔄 Cooling station on Level 1 activated\n4. 🔄 Crowd diversion: Sections 110-114 asked to hold via PA\n\n**AI Crowd Prediction:** Density in Sec 112 expected to reduce from 99% → 78% in 12 minutes if current diversion holds.\n\n**Recommendation:** Request additional cooling unit from inventory B3. Weather conditions (34°C feels-like) indicate 3 more at-risk individuals in adjacent sections.`,
+    aiPlan: `**AI-Generated Incident Action Plan (ICS-202)**\n\n**Incident:** Heat Exhaustion — Section 112\n**Severity:** HIGH | **Time:** T+4min\n\n**Immediate Actions:**\n1. ✅ EMS Team Alpha dispatched to Section 112\n2. ✅ Security perimeter established (3-meter buffer)\n3. ✅ Crowd diverted via PA announcement\n4. ⏳ Cooling station activated\n\n**Deployment:**\n- Route: Access Tunnel B (fastest)\n- ETA: 2 minutes\n- Resources: AED, IV fluids, cooling packs\n\n**Communication:**\n- Update incident command every 2 min\n- Notify medical director\n- Prepare Level 2 hospital alert`,
     assignedTo: ['EMS Alpha', 'Volunteer_Team_3', 'Security_Unit_7'],
     updates: [
       { id: 'u1', author: 'AI Orchestrator', content: 'EMS team dispatched. Predicted arrival T+2min via Access Tunnel B.', timestamp: new Date(Date.now() - 3.5 * 60000), isAiGenerated: true },
       { id: 'u2', author: 'Security_Unit_7', content: 'Perimeter secured. EMS has access.', timestamp: new Date(Date.now() - 2 * 60000), isAiGenerated: false },
-      { id: 'u3', author: 'AI Orchestrator', content: 'Crowd density in Sec 112 decreasing. PA diversion effective. Predicted: 78% in 8 min.', timestamp: new Date(Date.now() - 60000), isAiGenerated: true },
+      { id: 'u3', author: 'AI Orchestrator', content: 'Crowd density in Sec 112 decreasing. PA diversion effective. Predicted: 78% in 8 min.', timestamp: new Date(Date.now() - 60000), isAiGenerated: true }
     ]
   },
   {
@@ -91,10 +91,10 @@ export const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'AI Crowd Analytics Agent',
     reportedAt: new Date(Date.now() - 2 * 60000),
     updatedAt: new Date(Date.now() - 2 * 60000),
-    aiPlan: `**PREDICTIVE ALERT — Action Required**\n\nExternal camera feeds show 2,400 fans in Gate A queue. Current flow rate at 340/min suggests dangerous surge in **8 minutes**.\n\n**Recommended Actions:**\n1. Open Gate A2 auxiliary lanes immediately\n2. Redirect 800+ fans to Gate C via digital signage\n3. Deploy 4 additional volunteers to Gate A\n4. Alert Ground Control for traffic hold on Access Road 7`,
+    aiPlan: `**PREDICTIVE ALERT — Action Required**\n\nExternal camera feeds show 2,400 fans in Gate A queue. Current flow rate at 340/min suggests dangerous surge in **8 minutes**.\n\n**Recommended Actions:**\n1. Activate Gate A2 (secondary entry)\n2. Deploy 4 additional crowd marshals\n3. Increase PA announcements\n4. Prepare medical standby\n\n**Expected Outcome:** Surge prevented with 95% confidence`,
     assignedTo: [],
     updates: [
-      { id: 'u1', author: 'AI Crowd Agent', content: 'Predictive surge detected. Confidence: 89%. Recommending immediate Gate A2 activation.', timestamp: new Date(Date.now() - 2 * 60000), isAiGenerated: true },
+      { id: 'u1', author: 'AI Crowd Agent', content: 'Predictive surge detected. Confidence: 89%. Recommending immediate Gate A2 activation.', timestamp: new Date(Date.now() - 2 * 60000), isAiGenerated: true }
     ]
   },
   {
@@ -108,7 +108,7 @@ export const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'Staff_Martinez',
     reportedAt: new Date(Date.now() - 12 * 60000),
     updatedAt: new Date(Date.now() - 5 * 60000),
-    aiPlan: `**Infrastructure Resolution Plan**\n\nPOS system B7 offline. Backup payment terminal deployed. Estimated resolution: 15 minutes.\n\nAI Recommendation: Offer 10% digital voucher to affected fans in queue to reduce complaint escalations.`,
+    aiPlan: `**Infrastructure Resolution Plan**\n\nPOS system B7 offline. Backup payment terminal deployed. Estimated resolution: 15 minutes.\n\nAI Recommendation: Offer 10% digital voucher to affected customers`,
     assignedTo: ['Tech_Team_2'],
     updates: []
   }
@@ -116,32 +116,30 @@ export const MOCK_INCIDENTS: Incident[] = [
 
 // ---- Volunteer Tasks ----
 export const MOCK_VOLUNTEER_TASKS: VolunteerTask[] = [
-  { id: 'vt-001', title: 'Emergency Crowd Buffer — Section 112', description: 'Form perimeter around medical incident at Row 14. Hold 3-meter buffer.', priority: 'urgent', priorityScore: 98, zone: 'Section 112', status: 'in_progress', createdAt: new Date(Date.now() - 4 * 60000), aiGenerated: true, requiredSkills: ['crowd-management'] },
-  { id: 'vt-002', title: 'Gate A — Overflow Redirect', description: 'Direct incoming fans to Gate C. Use multilingual signage pack #3.', priority: 'high', priorityScore: 87, zone: 'Gate A Plaza', status: 'pending', createdAt: new Date(Date.now() - 2 * 60000), aiGenerated: true },
-  { id: 'vt-003', title: 'Cooling Station Activation — Level 1', description: 'Activate cooling mist station CL-01B. Confirm water supply connected.', priority: 'high', priorityScore: 82, zone: 'Level 1 Concourse', status: 'pending', createdAt: new Date(Date.now() - 3 * 60000), aiGenerated: true },
-  { id: 'vt-004', title: 'Accessibility Escort — Gate C', description: 'Fan in wheelchair requires escort to accessible seating Section 200A. Fan name: Maria Santos.', priority: 'high', priorityScore: 79, zone: 'Gate C', status: 'pending', createdAt: new Date(Date.now() - 7 * 60000), aiGenerated: false },
-  { id: 'vt-005', title: 'Lost Child Assistance — Info Booth 3', description: 'Child (approx. 8 years, red jersey) found near Gate B. Reunification protocol in progress.', priority: 'urgent', priorityScore: 95, zone: 'Info Booth 3', status: 'in_progress', createdAt: new Date(Date.now() - 8 * 60000), aiGenerated: false },
-  { id: 'vt-006', title: 'Merchandise Queue Management', description: 'Official store queue exceeds 90 fans. Implement timed entry system.', priority: 'normal', priorityScore: 45, zone: 'Retail Zone A', status: 'pending', createdAt: new Date(Date.now() - 15 * 60000), aiGenerated: true },
+  { id: 'vt-001', title: 'Emergency Crowd Buffer — Section 112', description: 'Form perimeter around medical incident at Row 14. Hold 3-meter buffer.', priority: 'urgent', priorityScore: 98, zone: 'Section 112', status: 'pending', createdAt: new Date(), aiGenerated: true },
+  { id: 'vt-002', title: 'Gate A — Overflow Redirect', description: 'Direct incoming fans to Gate C. Use multilingual signage pack #3.', priority: 'high', priorityScore: 87, zone: 'Gate A Plaza', status: 'pending', createdAt: new Date(), aiGenerated: true },
+  { id: 'vt-003', title: 'Cooling Station Activation — Level 1', description: 'Activate cooling mist station CL-01B. Confirm water supply connected.', priority: 'high', priorityScore: 82, zone: 'Concourse 1', status: 'pending', createdAt: new Date(), aiGenerated: true },
+  { id: 'vt-004', title: 'Accessibility Escort — Gate C', description: 'Fan in wheelchair requires escort to accessible seating Section 200A. Fan name: Maria Santos.', priority: 'high', priorityScore: 79, zone: 'Gate C', status: 'in_progress', createdAt: new Date(), aiGenerated: false },
+  { id: 'vt-005', title: 'Lost Child Assistance — Info Booth 3', description: 'Child (approx. 8 years, red jersey) found near Gate B. Reunification protocol in progress.', priority: 'urgent', priorityScore: 95, zone: 'Gate B', status: 'pending', createdAt: new Date(), aiGenerated: false },
+  { id: 'vt-006', title: 'Merchandise Queue Management', description: 'Official store queue exceeds 90 fans. Implement timed entry system.', priority: 'normal', priorityScore: 45, zone: 'Retail Zone', status: 'pending', createdAt: new Date(), aiGenerated: true },
 ];
 
 // ---- AI Insights ----
 export const MOCK_AI_INSIGHTS: AIInsight[] = [
-  { id: 'ai-001', type: 'prediction', title: 'Post-Match Exodus Surge Predicted', content: 'Based on match momentum (67\'), crowd behavior patterns indicate 89% probability of rapid simultaneous exit attempt in 23-28 minutes. Recommend pre-staging transport at Gates B and C now.', severity: 'high', timestamp: new Date(), affectedZones: ['gate-a', 'gate-b', 'gate-c', 'parking-north'], actionItems: ['Dispatch 6 additional shuttles to Gate B/C', 'Open emergency exit Route 7', 'Alert Metro Line 3 for capacity surge', 'Deploy 12 volunteers to exit corridors'], confidence: 89 },
-  { id: 'ai-002', type: 'alert', title: 'Heat Risk — 3 High-Risk Zones Identified', content: 'Temperature modeling shows heat index >38°C in sections 108-115 and upper deck east. Vulnerable fans (elderly, children) are statistically concentrated in these zones based on accessibility registration data.', severity: 'medium', timestamp: new Date(Date.now() - 5 * 60000), affectedZones: ['section-112', 'concourse-1'], actionItems: ['Activate misting stations SB-3, SB-4', 'Increase water distribution frequency', 'PA announcement in 6 languages'], confidence: 76 },
-  { id: 'ai-003', type: 'recommendation', title: 'Concession Revenue Optimization', content: 'Queue analysis shows Section 112 fans have avg. 18-min wait for concessions. AI recommends activating mobile ordering for Sections 108-120 to reduce walkout rate and recover ~$14,000 in lost revenue.', severity: 'low', timestamp: new Date(Date.now() - 10 * 60000), confidence: 91 },
-  { id: 'ai-004', type: 'summary', title: 'Match Day Situation Report — 67\'', content: 'OPERATIONAL STATUS: YELLOW\n\n✅ Security: No active threats. 3 access control alerts resolved.\n⚠️ Medical: 1 active incident (Sec 112 — heat). 2 minor cases resolved.\n⚠️ Crowd: Gate A trending critical. 2 zones at >80% density.\n✅ Transport: All transit lines normal. Minor parking delays at P3.\n✅ Weather: Conditions stable. UV index 7 — heat advisory active.\n\nAI Recommendation: Elevate operational status to ORANGE if Sec 112 density doesn\'t resolve in next 10 minutes.', severity: 'medium', timestamp: new Date(Date.now() - 2 * 60000), confidence: 95 },
+  { id: 'ai-001', type: 'prediction', title: 'Post-Match Exodus Surge Predicted', content: 'Based on match momentum (67\'), crowd behavior patterns indicate 89% probability of rapid simultaneous exit around minute 90. Recommend pre-staging 12 exit marshals and activating all parking lots.', severity: 'high', timestamp: new Date(), confidence: 89 },
+  { id: 'ai-002', type: 'alert', title: 'Heat Risk — 3 High-Risk Zones Identified', content: 'Temperature modeling shows heat index >38°C in sections 108-115 and upper deck east. Vulnerable fans (age 60+, children) flagged. Cooling stations activated.', severity: 'high', timestamp: new Date(), confidence: 92 },
+  { id: 'ai-003', type: 'recommendation', title: 'Concession Revenue Optimization', content: 'Queue analysis shows Section 112 fans have avg. 18-min wait for concessions. AI recommends activating mobile ordering for next 30 minutes.', severity: 'low', timestamp: new Date(), confidence: 76 },
+  { id: 'ai-004', type: 'summary', title: 'Match Day Situation Report — 67\'', content: 'OPERATIONAL STATUS: YELLOW\n\n✅ Security: No active threats. 3 access control alerts resolved.\n⚠️ Crowd: Gate A trending critical. Heat concerns in upper sections.\n📊 Systems: All nominal.', severity: 'medium', timestamp: new Date(), confidence: 88 },
 ];
 
 // ---- Transport ----
 export const MOCK_TRANSPORT: TransportInfo[] = [
-  { type: 'metro', name: 'Orange Line (AT&T Stadium)', status: 'normal', waitTime: 8, capacity: 2000, occupancy: 1340, nextDeparture: new Date(Date.now() + 8 * 60000), aiRecommendation: 'Recommended: Best post-match option. Pre-stage departure +5min early.' },
-  { type: 'shuttle', name: 'Official FIFA Shuttle A', status: 'normal', waitTime: 12, capacity: 80, occupancy: 62, aiRecommendation: 'Moderate wait. Shuttle B arriving in 7 minutes from Parking P3.' },
+  { type: 'metro', name: 'Orange Line (AT&T Stadium)', status: 'normal', waitTime: 8, capacity: 2000, occupancy: 1340, nextDeparture: new Date(Date.now() + 8 * 60000), aiRecommendation: 'Recommended for fastest exit. Book now.' },
+  { type: 'shuttle', name: 'Official FIFA Shuttle A', status: 'normal', waitTime: 12, capacity: 80, occupancy: 62, aiRecommendation: 'Moderate wait. Shuttle B arriving in 7 minutes from Parking P7.' },
   { type: 'shuttle', name: 'Accessibility Shuttle', status: 'normal', waitTime: 5, capacity: 20, occupancy: 8, aiRecommendation: 'Priority boarding available. Direct to hotel district.' },
   { type: 'parking', name: 'Lot P3 North', status: 'delayed', waitTime: 25, capacity: 3000, occupancy: 2850, aiRecommendation: 'Avoid P3 — 95% full. AI redirect to P7 West: 15 min drive, 40% empty.' },
   { type: 'rideshare', name: 'Surge Prediction', status: 'normal', waitTime: 6, aiRecommendation: 'Current surge: 1.4x. Expected to hit 3.2x in 25 min post-match. Book now.' },
 ];
-
-
 
 // ---- Multilingual Greetings ----
 export const MULTILINGUAL_GREETINGS: Record<string, { greeting: string; prompt: string; lang: string }> = {
