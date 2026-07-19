@@ -27,7 +27,7 @@ export default function OpsCenter({ onBack }: Props) {
           reportedAt: new Date(inc.reportedAt)
         }));
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
     return MOCK_INCIDENTS;
@@ -44,7 +44,7 @@ export default function OpsCenter({ onBack }: Props) {
           };
         }
       }
-    } catch (e) {}
+    } catch {}
     return MOCK_INCIDENTS[0];
   });
   const [insights] = useState<AIInsight[]>(MOCK_AI_INSIGHTS);
@@ -62,6 +62,16 @@ export default function OpsCenter({ onBack }: Props) {
     const interval = setInterval(() => setTick(t => t + 1), 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const { activeIncidents, resolvedCount, activeCount, criticalCount } = useMemo(() => {
+    const active = incidents.filter(i => i.status !== 'resolved');
+    return {
+      activeIncidents: active,
+      resolvedCount: incidents.length - active.length,
+      activeCount: active.length,
+      criticalCount: active.filter(i => i.severity === 'high' || i.severity === 'critical').length,
+    };
+  }, [incidents]);
 
   const generateSituationReport = useCallback(() => {
     setGeneratingReport(true);
@@ -115,7 +125,7 @@ Confidence: 95% | Model: gemini-1.5-pro | Tokens: 1,847`;
       }
     }, 20);
     return () => clearInterval(interval);
-  }, [incidents]);
+  }, [activeCount, resolvedCount, criticalCount]);
 
   const resolveIncident = (id: string) => {
     setIncidents(prev => prev.map(inc =>
@@ -125,16 +135,6 @@ Confidence: 95% | Model: gemini-1.5-pro | Tokens: 1,847`;
       setSelectedIncident(null);
     }
   };
-
-  const { activeIncidents, resolvedCount, activeCount, criticalCount } = useMemo(() => {
-    const active = incidents.filter(i => i.status !== 'resolved');
-    return {
-      activeIncidents: active,
-      resolvedCount: incidents.length - active.length,
-      activeCount: active.length,
-      criticalCount: active.filter(i => i.severity === 'high' || i.severity === 'critical').length,
-    };
-  }, [incidents]);
 
   return (
     <div className="ops-center" role="main" aria-label="NexusAI Operations Command Center">

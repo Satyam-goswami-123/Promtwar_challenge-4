@@ -1,4 +1,4 @@
-import { test, expect, describe, vi, beforeAll, afterAll } from 'vitest';
+import { test, expect, describe, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useChat } from '../src/hooks/useChat';
 

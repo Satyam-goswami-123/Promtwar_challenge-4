@@ -41,7 +41,7 @@ export default function VolunteerApp({ onBack }: Props) {
       if (stored) {
         return JSON.parse(stored);
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
     return MOCK_VOLUNTEER_TASKS;

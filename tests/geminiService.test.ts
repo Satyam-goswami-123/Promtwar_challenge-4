@@ -1,4 +1,4 @@
-import { test, expect, describe, vi, beforeEach } from 'vitest';
+import { test, expect, describe, beforeEach } from 'vitest';
 import {
   streamChatResponse,
   getStadiumContext,
@@ -25,7 +25,7 @@ describe('Gemini Service Layer - Core Features', () => {
 
   // ---- 1. API Key Validation Tests ----
   test('isValidApiKey checks key length and prefix', () => {
-    expect(isValidApiKey('AIzaSyDyWEHbxgu8FPcdMp2ZygU2xiVwbLntcbk')).toBe(true);
+    expect(isValidApiKey('AIzaSyDummyKey_123456789012345678901234')).toBe(true);
     expect(isValidApiKey('invalidKey')).toBe(false);
     expect(isValidApiKey(undefined)).toBe(false);
     expect(isValidApiKey('')).toBe(false);

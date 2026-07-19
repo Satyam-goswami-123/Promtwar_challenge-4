@@ -66,7 +66,7 @@ export function getCachedResponse(message: string): string | null {
     if (typeof sessionStorage !== 'undefined') {
       return sessionStorage.getItem(key);
     }
-  } catch (e) {
+  } catch {
     // SessionStorage unavailable or restricted
   }
   return localCache[key] || null;
@@ -78,7 +78,7 @@ export function setCachedResponse(message: string, response: string): void {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem(key, response);
     }
-  } catch (e) {
+  } catch {
     // SessionStorage unavailable or restricted
   }
   localCache[key] = response;
